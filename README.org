@@ -1,25 +1,22 @@
-#+title: Title
+#+title: Maze generator
 #+options: toc:nil
 #+startup: showeverything
 #+author: 8dcc
 
-#+begin_comment
-*TODO*: Change project-name and title
-*TODO*: Change output.out in Makefile
-#+end_comment
-
-*Short description.*
+*Generate mazes in PNG format using the depth-first search algorithm.*
 
 #+TOC: headlines 2
 
 * Description
-Long description.
+
+Simple C program for generating mazes of variable size using the depth-first
+search algorithm. For more information, see [[https://en.wikipedia.org/wiki/Maze_generation_algorithm][Wikipedia]].
 
 * Building
 
 #+begin_src console
-$ git clone https://github.com/8dcc/project-name
-$ cd project-name
+$ git clone https://github.com/8dcc/maze-generator
+$ cd maze-generator
 $ make
 ...
 #+end_src
@@ -27,6 +24,5 @@ $ make
 * Usage
 
 #+begin_src console
-$ ./project-name.out --help
-...
+$ ./maze-generator.out <output.png>
 #+end_src
