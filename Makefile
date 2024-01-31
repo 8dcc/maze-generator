@@ -1,13 +1,12 @@
 
 CC=gcc
 CFLAGS=-Wall -Wextra
-LDFLAGS=
+LDFLAGS=-lpng
 
-# TODO: Add object files and rename
 OBJ_FILES=main.c.o
 OBJS=$(addprefix obj/, $(OBJ_FILES))
 
-BIN=output.out
+BIN=maze-generator.out
 
 #-------------------------------------------------------------------------------
 
@@ -27,4 +26,3 @@ $(BIN): $(OBJS)
 obj/%.c.o : src/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
-
