@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <png.h>
 
 #define COL_BACKGROUND 0x000000FF
@@ -10,6 +11,12 @@
 
 #define CELL_SZ    10 /* px */
 #define WALL_WIDTH 2  /* px */
+
+/* Grid positions of entrance and exit of the mace */
+#define START_X 0
+#define START_Y 0
+#define END_X   (ctx.w - 1)
+#define END_Y   (ctx.h - 1)
 
 #define COL_SZ 4 /* Bytes of each entry in ctx.rows[] */
 
@@ -25,6 +32,12 @@
         exit(1);                      \
     }
 
+#define VEC(X, Y) ((vec2_t){ .x = (X), .y = (Y) })
+
+typedef struct {
+    int x, y;
+} vec2_t;
+
 typedef struct {
     uint32_t walls;
     bool visited;
@@ -37,6 +50,8 @@ typedef struct {
 
     Cell* grid;
     int w, h; /* Cell number, not px */
+    vec2_t* stack;
+    int stack_pos;
 } Context;
 
 /*----------------------------------------------------------------------------*/
@@ -49,9 +64,11 @@ static Context ctx = {
     .px_h     = 100 * CELL_SZ,
 
     /* Grid stuff */
-    .grid = NULL,
-    .w    = 100,
-    .h    = 100,
+    .grid      = NULL,
+    .w         = 100,
+    .h         = 100,
+    .stack     = NULL,
+    .stack_pos = 0,
 };
 
 /*----------------------------------------------------------------------------*/
@@ -73,9 +90,135 @@ static bool parse_args(int argc, char** argv) {
     ctx.px_w = ctx.w * CELL_SZ;
     ctx.px_h = ctx.h * CELL_SZ;
 
-    ctx.grid = calloc(ctx.w * ctx.h, sizeof(Cell));
+    ctx.grid  = calloc(ctx.w * ctx.h, sizeof(Cell));
+    ctx.stack = calloc(ctx.w * ctx.h, sizeof(vec2_t));
 
     return true;
+}
+
+static void stack_push(vec2_t v) {
+    if (ctx.stack_pos < ctx.w * ctx.h)
+        ctx.stack[ctx.stack_pos++] = v;
+}
+
+static vec2_t stack_pop(void) {
+    if (ctx.stack_pos <= 0)
+        return (vec2_t){ -1, -1 };
+
+    return ctx.stack[--ctx.stack_pos];
+}
+
+static int random_unvisited_neighbour(vec2_t v) {
+    const int x = v.x;
+    const int y = v.y;
+
+    int possible_walls[4] = { 0 };
+    int num               = 0;
+
+    if (y >= 1 && ctx.grid[ctx.w * (y - 1) + x].visited == false)
+        possible_walls[num++] = WALL_NORTH;
+    if (y < ctx.h - 1 && ctx.grid[ctx.w * (y + 1) + x].visited == false)
+        possible_walls[num++] = WALL_SOUTH;
+    if (x >= 1 && ctx.grid[ctx.w * y + (x - 1)].visited == false)
+        possible_walls[num++] = WALL_WEST;
+    if (x < ctx.w - 1 && ctx.grid[ctx.w * y + (x + 1)].visited == false)
+        possible_walls[num++] = WALL_EAST;
+
+    if (num == 0)
+        return 0;
+
+    int random_pos = rand() % num;
+    return possible_walls[random_pos];
+}
+
+static vec2_t pos_from_wall(vec2_t v, int wall) {
+    switch (wall) {
+        case WALL_NORTH:
+            return VEC(v.x, v.y - 1);
+        case WALL_SOUTH:
+            return VEC(v.x, v.y + 1);
+        case WALL_WEST:
+            return VEC(v.x - 1, v.y);
+        case WALL_EAST:
+            return VEC(v.x + 1, v.y);
+        default:
+            fprintf(stderr, "pos_from_wall: Invalid wall number (%d)\n", wall);
+            return VEC(0, 0);
+    }
+}
+
+static inline int opposite_wall(int wall) {
+    switch (wall) {
+        case WALL_NORTH:
+            return WALL_SOUTH;
+        case WALL_SOUTH:
+            return WALL_NORTH;
+        case WALL_WEST:
+            return WALL_EAST;
+        case WALL_EAST:
+            return WALL_WEST;
+        default:
+            fprintf(stderr, "opposite_wall: Invalid wall number (%d)\n", wall);
+            return WALL_NORTH;
+    }
+}
+
+static inline void remove_walls(vec2_t a, vec2_t b, int wall) {
+    ctx.grid[ctx.w * a.y + a.x].walls &= ~wall;
+    ctx.grid[ctx.w * b.y + b.x].walls &= ~opposite_wall(wall);
+}
+
+static void generate_maze(void) {
+    /* Clear maze */
+    for (int y = 0; y < ctx.h; y++) {
+        for (int x = 0; x < ctx.w; x++) {
+            ctx.grid[ctx.w * y + x].walls =
+              WALL_NORTH | WALL_SOUTH | WALL_WEST | WALL_EAST;
+            ctx.grid[ctx.w * y + x].visited = false;
+        }
+    }
+
+    /* Push starting position into the stack, and mark as visited */
+    vec2_t cur_pos = VEC(START_X, START_Y);
+    stack_push(cur_pos);
+    ctx.grid[ctx.w * cur_pos.x + cur_pos.y].visited = true;
+
+    /* While we have positions left in the stack */
+    for (;;) {
+        /* Get next position from the stack */
+        cur_pos = stack_pop();
+
+        /* No more positions to check, we are done */
+        if (cur_pos.x < 0 || cur_pos.y < 0)
+            break;
+
+        /* Get a random adjacent cell which has not been visited */
+        int valid_neighbour_wall = random_unvisited_neighbour(cur_pos);
+
+        /* Has valid neighbours */
+        if (valid_neighbour_wall != 0) {
+            /* Push current position */
+            stack_push(cur_pos);
+
+            /* Get position of neighbour from wall orientation */
+            vec2_t neighbour = pos_from_wall(cur_pos, valid_neighbour_wall);
+
+            if (neighbour.x < 0 || neighbour.x >= ctx.w || neighbour.y < 0 ||
+                neighbour.y >= ctx.h)
+                fprintf(stderr, "Warning: Neighbour out of bounds.\n");
+
+            /* Remove the wall in the current cell and the random neighbour */
+            remove_walls(cur_pos, neighbour, valid_neighbour_wall);
+
+            /* Mark neighbour as visited and push to the stack */
+            ctx.grid[ctx.w * neighbour.y + neighbour.x].visited = true;
+            stack_push(neighbour);
+        }
+    }
+
+    /* Remove wall of start and end positions */
+    ctx.grid[ctx.w * START_X + START_Y].walls &= ~WALL_NORTH;
+    ctx.grid[ctx.w * END_X + END_Y].walls &= ~WALL_SOUTH;
 }
 
 static void draw_rect(int x, int y, int w, int h, uint64_t c) {
@@ -84,6 +227,11 @@ static void draw_rect(int x, int y, int w, int h, uint64_t c) {
          * positions by the size of each element: COL_SZ (4) */
         for (int cur_x = x * COL_SZ; cur_x < (x + w) * COL_SZ;
              cur_x += COL_SZ) {
+            /* Make sure we are not out of bounds */
+            if (cur_x < 0 || cur_x >= ctx.px_w * 4 || cur_y < 0 ||
+                cur_y >= ctx.px_h)
+                continue;
+
             ctx.rows[cur_y][cur_x]     = (c >> 24) & 0xFF; /* r */
             ctx.rows[cur_y][cur_x + 1] = (c >> 16) & 0xFF; /* g */
             ctx.rows[cur_y][cur_x + 2] = (c >> 8) & 0xFF;  /* b */
@@ -98,21 +246,24 @@ static void grid_to_rows(void) {
 
     for (int y = 0; y < ctx.h; y++) {
         for (int x = 0; x < ctx.w; x++) {
-            int px_y = y * CELL_SZ;
-            int px_x = x * CELL_SZ;
+            const int px_y   = y * CELL_SZ;
+            const int px_x   = x * CELL_SZ;
+            const int half_w = WALL_WIDTH / 2;
 
             if (ctx.grid[ctx.w * y + x].walls & WALL_NORTH)
-                draw_rect(px_x, px_y, CELL_SZ, WALL_WIDTH, COL_WALL);
-
-            if (ctx.grid[ctx.w * y + x].walls & WALL_SOUTH)
-                draw_rect(px_x, px_y + CELL_SZ, CELL_SZ + WALL_WIDTH,
+                draw_rect(px_x - half_w, px_y - half_w, CELL_SZ + WALL_WIDTH,
                           WALL_WIDTH, COL_WALL);
 
+            if (ctx.grid[ctx.w * y + x].walls & WALL_SOUTH)
+                draw_rect(px_x - half_w, px_y + CELL_SZ - half_w,
+                          CELL_SZ + WALL_WIDTH, WALL_WIDTH, COL_WALL);
+
             if (ctx.grid[ctx.w * y + x].walls & WALL_WEST)
-                draw_rect(px_x, px_y, WALL_WIDTH, CELL_SZ, COL_WALL);
+                draw_rect(px_x - half_w, px_y - half_w, WALL_WIDTH,
+                          CELL_SZ + WALL_WIDTH, COL_WALL);
 
             if (ctx.grid[ctx.w * y + x].walls & WALL_EAST)
-                draw_rect(px_x + CELL_SZ, px_y, WALL_WIDTH,
+                draw_rect(px_x + CELL_SZ - half_w, px_y - half_w, WALL_WIDTH,
                           CELL_SZ + WALL_WIDTH, COL_WALL);
         }
     }
@@ -168,18 +319,16 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // TODO: Generate maze
+    srand(time(NULL));
 
-    // DELME
-    ctx.grid[ctx.w * 5 + 3].walls |= WALL_NORTH;
-    ctx.grid[ctx.w * 5 + 3].walls |= WALL_SOUTH;
-    ctx.grid[ctx.w * 5 + 3].walls |= WALL_WEST;
-    ctx.grid[ctx.w * 5 + 3].walls |= WALL_EAST;
+    printf("Generating %dx%d maze...\n", ctx.w, ctx.h);
+    generate_maze();
 
     printf("Writing %dx%d file...\n", ctx.px_w, ctx.px_h);
     write_png();
 
     puts("Done.");
     free(ctx.grid);
+    free(ctx.stack);
     return 0;
 }
