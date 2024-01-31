@@ -217,8 +217,8 @@ static void generate_maze(void) {
     }
 
     /* Remove wall of start and end positions */
-    ctx.grid[ctx.w * START_X + START_Y].walls &= ~WALL_NORTH;
-    ctx.grid[ctx.w * END_X + END_Y].walls &= ~WALL_SOUTH;
+    ctx.grid[ctx.w * START_Y + START_X].walls &= ~WALL_NORTH;
+    ctx.grid[ctx.w * END_Y + END_X].walls &= ~WALL_SOUTH;
 }
 
 static void draw_rect(int x, int y, int w, int h, uint64_t c) {
