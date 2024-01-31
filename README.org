@@ -23,6 +23,16 @@ $ make
 
 * Usage
 
+You can change a lot of macros in the code, like cell size, wall width, wall and
+background colors, maze entrance and exit positions, etc.
+
 #+begin_src console
-$ ./maze-generator.out <output.png>
+$ ./maze-generator.out <output.png> <w> <h>
+Generating 65x50 maze...
+Writing 650x500 file...
+Done.
 #+end_src
+
+* Screenshots
+
+[[file:maze.png]]
