@@ -185,8 +185,8 @@ static void generate_maze(void) {
         }
     }
 
-    /* Push starting position into the stack, and mark as visited */
-    vec2_t cur_pos = VEC(START_X, START_Y);
+    /* Push starting position (center) into the stack, and mark as visited */
+    vec2_t cur_pos = VEC(ctx.w / 2, ctx.h / 2);
     stack_push(cur_pos);
     ctx.grid[ctx.w * cur_pos.x + cur_pos.y].visited = true;
 
@@ -223,7 +223,7 @@ static void generate_maze(void) {
         }
     }
 
-    /* Remove wall of start and end positions */
+    /* Remove walls of entry and exit */
     ctx.grid[ctx.w * START_Y + START_X].walls &= ~WALL_NORTH;
     ctx.grid[ctx.w * END_Y + END_X].walls &= ~WALL_SOUTH;
 }
