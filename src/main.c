@@ -12,6 +12,9 @@
 #define CELL_SZ    10 /* px */
 #define WALL_WIDTH 2  /* px */
 
+#define BIAS_HORIZ 1 /* 1-N */
+#define BIAS_VERT  1 /* 1-N */
+
 /* Grid positions of entrance and exit of the mace */
 #define START_X 0
 #define START_Y 0
@@ -112,17 +115,21 @@ static int random_unvisited_neighbour(vec2_t v) {
     const int x = v.x;
     const int y = v.y;
 
-    int possible_walls[4] = { 0 };
-    int num               = 0;
+    int possible_walls[4 * BIAS_VERT * BIAS_HORIZ] = { 0 };
+    int num                                        = 0;
 
     if (y >= 1 && ctx.grid[ctx.w * (y - 1) + x].visited == false)
-        possible_walls[num++] = WALL_NORTH;
+        for (int i = 0; i < BIAS_VERT; i++)
+            possible_walls[num++] = WALL_NORTH;
     if (y < ctx.h - 1 && ctx.grid[ctx.w * (y + 1) + x].visited == false)
-        possible_walls[num++] = WALL_SOUTH;
+        for (int i = 0; i < BIAS_VERT; i++)
+            possible_walls[num++] = WALL_SOUTH;
     if (x >= 1 && ctx.grid[ctx.w * y + (x - 1)].visited == false)
-        possible_walls[num++] = WALL_WEST;
+        for (int i = 0; i < BIAS_HORIZ; i++)
+            possible_walls[num++] = WALL_WEST;
     if (x < ctx.w - 1 && ctx.grid[ctx.w * y + (x + 1)].visited == false)
-        possible_walls[num++] = WALL_EAST;
+        for (int i = 0; i < BIAS_HORIZ; i++)
+            possible_walls[num++] = WALL_EAST;
 
     if (num == 0)
         return 0;
