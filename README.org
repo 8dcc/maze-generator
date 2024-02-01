@@ -23,8 +23,8 @@ $ make
 
 * Usage
 
-You can change a lot of macros in the code, like cell size, wall width, wall and
-background colors, maze entrance and exit positions, etc.
+You can change a lot of macros in the code, like cell size, wall width, colors,
+entrance and exit positions, vertical and horizontal bias, etc.
 
 #+begin_src console
 $ ./maze-generator.out <output.png> <w> <h>
