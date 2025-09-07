@@ -28,11 +28,11 @@
 #define WALL_WEST  (1 << 2)
 #define WALL_EAST  (1 << 3)
 
-#define DIE(...)                      \
-    {                                 \
-        fprintf(stderr, __VA_ARGS__); \
-        putc('\n', stderr);           \
-        exit(1);                      \
+#define DIE(...)                                                               \
+    {                                                                          \
+        fprintf(stderr, __VA_ARGS__);                                          \
+        putc('\n', stderr);                                                    \
+        exit(1);                                                               \
     }
 
 #define VEC(X, Y) ((vec2_t){ .x = (X), .y = (Y) })
@@ -258,20 +258,32 @@ static void grid_to_rows(void) {
             const int half_w = WALL_WIDTH / 2;
 
             if (ctx.grid[ctx.w * y + x].walls & WALL_NORTH)
-                draw_rect(px_x - half_w, px_y - half_w, CELL_SZ + WALL_WIDTH,
-                          WALL_WIDTH, COL_WALL);
+                draw_rect(px_x - half_w,
+                          px_y - half_w,
+                          CELL_SZ + WALL_WIDTH,
+                          WALL_WIDTH,
+                          COL_WALL);
 
             if (ctx.grid[ctx.w * y + x].walls & WALL_SOUTH)
-                draw_rect(px_x - half_w, px_y + CELL_SZ - half_w,
-                          CELL_SZ + WALL_WIDTH, WALL_WIDTH, COL_WALL);
+                draw_rect(px_x - half_w,
+                          px_y + CELL_SZ - half_w,
+                          CELL_SZ + WALL_WIDTH,
+                          WALL_WIDTH,
+                          COL_WALL);
 
             if (ctx.grid[ctx.w * y + x].walls & WALL_WEST)
-                draw_rect(px_x - half_w, px_y - half_w, WALL_WIDTH,
-                          CELL_SZ + WALL_WIDTH, COL_WALL);
+                draw_rect(px_x - half_w,
+                          px_y - half_w,
+                          WALL_WIDTH,
+                          CELL_SZ + WALL_WIDTH,
+                          COL_WALL);
 
             if (ctx.grid[ctx.w * y + x].walls & WALL_EAST)
-                draw_rect(px_x + CELL_SZ - half_w, px_y - half_w, WALL_WIDTH,
-                          CELL_SZ + WALL_WIDTH, COL_WALL);
+                draw_rect(px_x + CELL_SZ - half_w,
+                          px_y - half_w,
+                          WALL_WIDTH,
+                          CELL_SZ + WALL_WIDTH,
+                          COL_WALL);
         }
     }
 }
@@ -292,8 +304,14 @@ static void write_png(void) {
 
     /* Specify the PNG info */
     png_init_io(png, fd);
-    png_set_IHDR(png, info, ctx.px_w, ctx.px_h, 8, PNG_COLOR_TYPE_RGBA,
-                 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
+    png_set_IHDR(png,
+                 info,
+                 ctx.px_w,
+                 ctx.px_h,
+                 8,
+                 PNG_COLOR_TYPE_RGBA,
+                 PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_DEFAULT,
                  PNG_FILTER_TYPE_DEFAULT);
     png_write_info(png, info);
 
