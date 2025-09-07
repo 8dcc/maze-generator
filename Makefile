@@ -1,10 +1,10 @@
 
-CC=gcc
-CFLAGS=-Wall -Wextra
-LDFLAGS=-lpng
+CC     := gcc
+CFLAGS := -std=c99 -Wall -Wextra -Wpedantic -Wshadow
+LDLIBS := -lpng
 
-OBJ_FILES=main.c.o
-OBJS=$(addprefix obj/, $(OBJ_FILES))
+SRC := main.c
+OBJ := $(addprefix obj/, $(addsuffix .o, $(SRC)))
 
 BIN=maze-generator.out
 
@@ -15,14 +15,14 @@ BIN=maze-generator.out
 all: $(BIN)
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJ)
 	rm -f $(BIN)
 
 #-------------------------------------------------------------------------------
 
-$(BIN): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+$(BIN): $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 obj/%.c.o : src/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -o $@ -c $<
