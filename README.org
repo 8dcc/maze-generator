@@ -1,13 +1,6 @@
-#+title: Maze generator
-#+options: toc:nil
-#+startup: showeverything
-#+author: 8dcc
-
-*Generate mazes in PNG format using the depth-first search algorithm.*
-
-#+TOC: headlines 2
-
-* Description
+#+TITLE: Maze generator
+#+AUTHOR: 8dcc
+#+STARTUP: showeverything
 
 Simple C program for generating mazes of variable size using the depth-first
 search algorithm. For more information, see [[https://en.wikipedia.org/wiki/Maze_generation_algorithm][Wikipedia]].
@@ -27,7 +20,7 @@ You can change a lot of macros in the code, like cell size, wall width, colors,
 entrance and exit positions, vertical and horizontal bias, etc.
 
 #+begin_src console
-$ ./maze-generator.out <output.png> <w> <h>
+$ ./maze-generator.out [OUTPUT.png] [WIDTH] [HEIGHT]
 Generating 65x50 maze...
 Writing 650x500 file...
 Done.
@@ -35,4 +28,6 @@ Done.
 
 * Screenshots
 
-[[file:maze.png]]
+[[file:examples/maze1.png]]
+
+[[file:examples/maze2.png]]

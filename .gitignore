@@ -1,5 +1,5 @@
 # Output
-*.png
+/*.png
 
 # Doxygen documentation
 /doc/html/
