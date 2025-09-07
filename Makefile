@@ -3,7 +3,7 @@ CC     := gcc
 CFLAGS := -std=c99 -Wall -Wextra -Wpedantic -Wshadow
 LDLIBS := -lpng
 
-SRC := main.c
+SRC := main.c vec.c maze_ctx.c image.c
 OBJ := $(addprefix obj/, $(addsuffix .o, $(SRC)))
 
 BIN=maze-generator.out
