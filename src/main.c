@@ -23,17 +23,25 @@
 
 #define COL_SZ 4 /* Bytes of each entry in ctx.rows[] */
 
-#define WALL_NORTH (1 << 0)
-#define WALL_SOUTH (1 << 1)
-#define WALL_WEST  (1 << 2)
-#define WALL_EAST  (1 << 3)
+enum EWalls {
+    WALL_NORTH = (1 << 0),
+    WALL_SOUTH = (1 << 1),
+    WALL_WEST  = (1 << 2),
+    WALL_EAST  = (1 << 3),
+};
+
+#define ERR(...)                                                               \
+    do {                                                                       \
+        fprintf(stderr, "%s: ", __func__);                                     \
+        fprintf(stderr, __VA_ARGS__);                                          \
+        fputc('\n', stderr);                                                   \
+    } while (0)
 
 #define DIE(...)                                                               \
-    {                                                                          \
-        fprintf(stderr, __VA_ARGS__);                                          \
-        putc('\n', stderr);                                                    \
+    do {                                                                       \
+        ERR(__VA_ARGS__);                                                      \
         exit(1);                                                               \
-    }
+    } while (0)
 
 #define VEC(X, Y) ((vec2_t){ .x = (X), .y = (Y) })
 
@@ -86,7 +94,7 @@ static bool parse_args(int argc, char** argv) {
         ctx.h = atoi(argv[3]);
 
     if (ctx.w <= 0 || ctx.h <= 0) {
-        fprintf(stderr, "Invalid grid size.\n");
+        ERR("Invalid grid size.");
         return false;
     }
 
@@ -138,7 +146,7 @@ static int random_unvisited_neighbour(vec2_t v) {
     return possible_walls[random_pos];
 }
 
-static vec2_t pos_from_wall(vec2_t v, int wall) {
+static vec2_t pos_from_wall(vec2_t v, enum EWalls wall) {
     switch (wall) {
         case WALL_NORTH:
             return VEC(v.x, v.y - 1);
@@ -149,7 +157,7 @@ static vec2_t pos_from_wall(vec2_t v, int wall) {
         case WALL_EAST:
             return VEC(v.x + 1, v.y);
         default:
-            fprintf(stderr, "pos_from_wall: Invalid wall number (%d)\n", wall);
+            ERR("Invalid wall direction: %d", wall);
             return VEC(0, 0);
     }
 }
@@ -165,7 +173,7 @@ static inline int opposite_wall(int wall) {
         case WALL_EAST:
             return WALL_WEST;
         default:
-            fprintf(stderr, "opposite_wall: Invalid wall number (%d)\n", wall);
+            ERR("Invalid wall number (%d)", wall);
             return WALL_NORTH;
     }
 }
@@ -212,7 +220,7 @@ static void generate_maze(void) {
 
             if (neighbour.x < 0 || neighbour.x >= ctx.w || neighbour.y < 0 ||
                 neighbour.y >= ctx.h)
-                fprintf(stderr, "Warning: Neighbour out of bounds.\n");
+                ERR("Warning: Neighbour out of bounds.");
 
             /* Remove the wall in the current cell and the random neighbour */
             remove_walls(cur_pos, neighbour, valid_neighbour_wall);
